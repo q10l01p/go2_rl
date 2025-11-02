@@ -1,0 +1,11 @@
+<launch>
+
+    <arg name="config_file" default="$(find legkilo)/config/leg_fusion.yaml"/>
+
+    <node pkg="legkilo" type="legkilo_node" name="legkilo_node" output="screen"
+        args="--config_file=$(arg config_file)" />
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find go2_description)/xacro/robot.xacro" />
+
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find legkilo)/rviz/legkilo_robot.rviz" />
+</launch>

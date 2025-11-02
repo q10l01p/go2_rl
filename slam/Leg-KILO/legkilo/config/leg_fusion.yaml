@@ -1,0 +1,133 @@
+# Topics
+# 激光雷达点云话题名称，必须与仿真或实机发布一致
+lidar_topic: /livox/points
+# 纯 IMU 数据话题，only_imu_use=true 时会订阅
+imu_topic: /livox/imu
+# Unitree 高态消息话题，提供腿部里程计所需的关节/力信息
+kinematic_topic: /high_state
+
+
+# KI Options
+# 是否仅使用 IMU（true 时不依赖腿部信息）
+only_imu_use: true # True: use IMU from <sensor_msgs::Imu>, without kinematics
+                                          # False: use IMU and Kin. from <unitree_legged_msgs/HighState>
+# 是否启用冗余过滤，避免高频重复数据
+redundancy: true # set true for legkilo dataset 
+                                     # (imu/kin publish freq is 500 hz but update freq is only 50 hz )
+
+# Initialization
+# 初始化时累计的观测时间长度（秒）
+init_time: 0.05
+# 重力常数，用于 ESKF 初值
+gravity: 9.81                
+
+# Extrinsic (Transformation  from IMU coordinate  to Lidar coordinate)
+# IMU 到 LiDAR 的平移外参（米）
+extrinsic_T: [-0.062, 0.000, 0.042]
+# IMU 到 LiDAR 的旋转外参（行优先 3x3 单位矩阵）
+extrinsic_R: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+
+# Lidar Common
+# 雷达数据类型，1=Velodyne 格式，需要 time/ring 字段
+lidar_type: 1  # Hesai/Livox (timestamp field)
+# 点云时间尺度，1 表示 time 字段已经是秒
+time_scale: 1.0 # point sampling time scale relative to [sec]
+# 忽略的近距离半径，单位米
+blind: 1.5
+# 点云稀疏采样步长，每隔多少点取一个
+filter_num: 3
+# 是否修正时间戳（扫描末尾时间戳场景设为 true）
+point_stamp_correct: True  # Set true for legkilo dataset
+                                                         # (lidar timestamp is the end time of scan)
+# 体素滤波分辨率，单位米
+voxel_grid_resolution: 0.3
+
+# Voxel Map
+# 是否发布平面地图
+pub_plane_en: false
+# 最大体素层数
+max_layer: 2
+# 体素边长（米）
+voxel_size: 0.5
+# 平面判定的最小特征值
+min_eigen_value: 0.01
+# 残差放大倍数
+sigma_num: 3
+# 激光束误差标准差（米）
+beam_err: 0.2
+# 深度误差标准差（米）
+dept_err: 0.04
+# 不同层初始点数阈值
+layer_init_num: [5, 5, 5, 5, 5]
+# 单体素最大点数
+max_points_num: 50
+# 是否启用滑窗地图
+map_sliding_en: false
+# 地图半径（米）
+half_map_size: 100
+# 滑窗触发阈值（米）
+sliding_thresh: 8
+
+# Kinematic/imu
+# 前腿足端相对机体 x 方向偏移（米）
+leg_offset_x: 0.1934
+# 前后腿 y 方向偏移（米）
+leg_offset_y: 0.0465
+# 小腿长度（米）
+leg_calf_length: 0.213
+# 大腿长度（米）
+leg_thigh_length: 0.213
+# 大腿关节偏移量（米）
+leg_thigh_offset: 0.0955
+# 足端触地判据上阈值（牛顿）
+contact_force_threshold_up: 220
+# 足端触地判据下阈值（牛顿）
+contact_force_threshold_down: 200
+# 是否发布关节状态到 /joint_states
+pub_joint_tf_enable: true
+
+# IMU 加速度饱和阈值（m/s^2）
+satu_acc: 35
+# IMU 角速度饱和阈值（deg/s 或 rad/s，根据实现，这里沿用默认）
+satu_gyr: 30
+
+# Eskf cov/noise
+# 速度过程噪声
+vel_process_cov: 20
+# IMU 加速度过程噪声
+imu_acc_process_cov: 500
+# IMU 陀螺仪过程噪声
+imu_gyr_process_cov: 1000
+# 触地约束过程噪声
+contact_process_cov: 20
+# 加速度零偏过程噪声
+acc_bias_process_cov: 0.001
+# 陀螺仪零偏过程噪声
+gyr_bias_process_cov: 0.001
+# 运动学偏差过程噪声
+kin_bias_process_cov: 0.001
+
+# IMU 加速度测量噪声
+imu_acc_meas_noise: 0.1
+# IMU 垂直加速度测量噪声
+imu_acc_z_meas_noise: 1.0
+# IMU 角速度测量噪声
+imu_gyr_meas_noise: 0.01
+# 运动学速度测量噪声
+kin_meas_noise: 0.1
+# 足端高度测量噪声
+chd_meas_noise: 0.1
+# 足端接触测量噪声
+contact_meas_noise: 0.001
+# 激光点量测噪声比例系数
+lidar_point_meas_ratio: 10
+
+# vis
+# 是否保存估计轨迹
+save_traj_enable: false
+# 是否保存点云地图
+save_pcd_enable: false
+# 每个点云文件包含的帧数
+pcd_frames_per_file: 100
+# 保存点云的体素分辨率
+pcd_voxel_leaf_size: 0.1

@@ -48,3 +48,10 @@ install(
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
 )
+
+# Install message definition files so that the package works from install space
+install(
+  DIRECTORY msg/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/msg
+  FILES_MATCHING PATTERN "*.msg"
+)

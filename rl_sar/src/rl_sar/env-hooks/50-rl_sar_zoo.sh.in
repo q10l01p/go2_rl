@@ -1,0 +1,27 @@
+# generated from rl_sar env hook (ament)
+_rl_sar_zoo_path="@RL_SAR_ZOO_DIR@"
+if [ -d "${_rl_sar_zoo_path}" ]; then
+  export RL_SAR_ZOO_PATH="${_rl_sar_zoo_path}"
+
+  case ":${ROS_PACKAGE_PATH}:" in
+    *":${_rl_sar_zoo_path}:"*) ;;
+    *)
+      if [ -z "${ROS_PACKAGE_PATH}" ]; then
+        export ROS_PACKAGE_PATH="${_rl_sar_zoo_path}"
+      else
+        export ROS_PACKAGE_PATH="${ROS_PACKAGE_PATH}:${_rl_sar_zoo_path}"
+      fi
+    ;;
+  esac
+
+  case ":${GAZEBO_MODEL_PATH}:" in
+    *":${_rl_sar_zoo_path}:"*) ;;
+    *)
+      if [ -z "${GAZEBO_MODEL_PATH}" ]; then
+        export GAZEBO_MODEL_PATH="${_rl_sar_zoo_path}"
+      else
+        export GAZEBO_MODEL_PATH="${GAZEBO_MODEL_PATH}:${_rl_sar_zoo_path}"
+      fi
+    ;;
+  esac
+fi

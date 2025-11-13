@@ -1,8 +1,8 @@
 # Topics
 # 激光雷达点云话题名称，必须与仿真或实机发布一致
-lidar_topic: /livox/points
+lidar_topic: /velodyne_points
 # 纯 IMU 数据话题，only_imu_use=true 时会订阅
-imu_topic: /livox/imu
+imu_topic: /trunk_imu
 # Unitree 高态消息话题，提供腿部里程计所需的关节/力信息
 kinematic_topic: /high_state
 
@@ -35,7 +35,7 @@ time_scale: 1.0 # point sampling time scale relative to [sec]
 # 忽略的近距离半径，单位米
 blind: 1.5
 # 点云稀疏采样步长，每隔多少点取一个
-filter_num: 3
+filter_num: 6
 # 是否修正时间戳（扫描末尾时间戳场景设为 true）
 point_stamp_correct: True  # Set true for legkilo dataset
                                                          # (lidar timestamp is the end time of scan)

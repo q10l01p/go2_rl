@@ -41,6 +41,7 @@ endif()
 
 # Get project root directory
 get_filename_component(PROJECT_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+set(RL_SAR_ZOO_DIR "${PROJECT_ROOT_DIR}/src/rl_sar_zoo")
 
 add_definitions(-DCMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_definitions(-DPOLICY_DIR="${PROJECT_ROOT_DIR}/policy")
@@ -71,6 +72,9 @@ if(NOT USE_CMAKE)
             rospy
             unitree_legged_msgs
         )
+        if(EXISTS "${RL_SAR_ZOO_DIR}")
+            catkin_add_env_hooks(50.rl_sar_zoo SHELLS bash zsh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
+        endif()
     elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
         find_package(ament_cmake REQUIRED)
         find_package(joint_state_broadcaster REQUIRED)
@@ -84,6 +88,14 @@ if(NOT USE_CMAKE)
         find_package(gazebo_msgs REQUIRED)
         find_package(std_srvs REQUIRED)
         find_package(geometry_msgs REQUIRED)
+        if(EXISTS "${RL_SAR_ZOO_DIR}")
+            configure_file(
+                ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks/50-rl_sar_zoo.sh.in
+                ${CMAKE_CURRENT_BINARY_DIR}/50-rl_sar_zoo.sh
+                @ONLY
+            )
+            ament_environment_hooks(${CMAKE_CURRENT_BINARY_DIR}/50-rl_sar_zoo.sh)
+        endif()
         ament_package()
     endif()
     add_compile_options(${GAZEBO_CXX_FLAGS})

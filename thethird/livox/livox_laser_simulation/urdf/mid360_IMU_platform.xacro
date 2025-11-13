@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<!--
+@功能简介:
+  本文件定义了一个可重用的 XACRO 宏，用于创建一个集成了 Livox Mid-360 激光雷达和 IMU 的传感器组件。
+  该组件主要用于 Gazebo 仿真环境，包含了传感器模型、物理属性以及对应的 Gazebo 插件配置。
+
+@发布:
+  - /livox/points (sensor_msgs/PointCloud2): 由激光雷达插件发布，用于输出点云数据。可通过 'ros_topic' 参数自定义主题名称。
+  - /livox/imu (sensor_msgs/Imu): 由 IMU 插件发布，用于输出惯性测量单元数据。
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- 引入 Livox Mid-360 激光雷达的基础模型定义 -->
+  <xacro:include filename="$(find livox_laser_simulation)/urdf/livox_mid360.xacro"/>
+
+  <!--
+    @功能描述:
+      定义一个名为 LivoxMid360_IMU_Plantform 的 XACRO 宏，用于快速在机器人模型中实例化一个 Livox Mid-360 与 IMU 的组合传感器。
+      该宏会自动生成所需的 link (连杆)、joint (关节) 以及 Gazebo 仿真插件。
+
+    @核心处理流程:
+      1. 定义一个基础平台连杆 (platform_link) 作为传感器安装的基座。
+      2. 通过一个 'fixed' 类型的关节，将此平台连杆挂载到指定的父连杆 (parent_link_name) 上。
+      3. 在平台连杆上，分别通过固定的关节安装 Livox 激光雷达模型和 IMU 模型。
+      4. 引入并实例化 'Livox_Mid40' 宏 (注意：可能为 Livox_Mid360 的笔误) 来创建激光雷达模型及其 Gazebo 插件。
+      5. 为 IMU 连杆配置 Gazebo 的 'imu_sensor' 插件，使其能够模拟 IMU 数据并发布到 ROS 主题。
+
+    @参数说明:
+      name                      (string): 此传感器组件的唯一名称前缀。
+      parent_link_name          (string): 用于挂载此传感器组件的父连杆名称 (例如 'base_link')。
+      x, y, z                   (double): 传感器组件相对于父连杆的原点偏移量 (米)。
+      r, p, yaw                 (double): 传感器组件相对于父连杆的姿态角 (弧度)。
+      ros_topic                 (string): 激光雷达发布点云数据所使用的 ROS 主题名称。
+      publish_pointcloud_type   (int):    发布的 Livox 点云类型 (例如 0: livox_ros_driver/CustomMsg, 1: sensor_msgs/PointCloud2)。
+  -->
+  <xacro:macro name="LivoxMid360_IMU_Plantform" params="name:=mid360_imu_plantform parent_link_name:=base_link x:=0.0 y:=0.0 z:=0.3367 r:=0.0 p:=0.0 yaw:=0.0 ros_topic:=/livox/points publish_pointcloud_type:=1 max_publish_distance:=40.0">
+
+      <!-- 定义宏内部使用的连杆名称，方便管理和引用 -->
+      <xacro:property name="platform_link" value="${name}_platform_link"/>
+      <xacro:property name="lidar_base_link" value="${name}_livox_base"/>
+      <xacro:property name="imu_link" value="${name}_imu_link"/>
+
+      <!-- 定义一个固定关节，将整个传感器平台连接到指定的父连杆上 -->
+      <joint name="${name}_mount_joint" type="fixed">
+        <parent link="${parent_link_name}" />
+        <child link="${platform_link}" />
+        <!-- origin 标签定义了此传感器平台相对于父连杆的安装位置和姿态 -->
+        <origin xyz="${x} ${y} ${z}" rpy="${r} ${p} ${yaw}" />
+      </joint>
+
+      <!-- 平台连杆 (platform_link): 作为 LiDAR 和 IMU 的公共安装基座。 -->
+      <link name="${platform_link}" >
+        <visual>
+          <geometry>
+            <!-- 使用尺寸为0的 box，意味着这个连杆在物理仿真和可视化中是不可见的。 -->
+            <!-- 其主要作用是提供一个坐标系基准，用于挂载其他传感器。 -->
+            <box size="0. 0. 0." />
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <box size="0. 0. 0." />
+          </geometry>
+        </collision>
+      
+        <!-- 定义平台的惯性属性，对于动态仿真是必需的。 -->
+        <inertial>
+          <origin xyz="0 0 0"/>
+          <mass value="0.15"/>
+          <inertia ixx="0.1" ixy="0.0" ixz="0.0"
+                  iyy="0.1" iyz="0.0" 
+                  izz="0.1" />
+        </inertial>
+    
+      </link>
+
+      <!-- Gazebo 相关配置，设置平台连杆不受重力影响（如果需要） -->
+      <gazebo reference="${platform_link}">
+        <turnGravityOff>false</turnGravityOff>
+      </gazebo>
+
+      <!-- 定义一个固定关节，将激光雷达基座安装到平台上 -->
+      <joint name="${name}_lidar_mount_joint" type="fixed" >
+        <parent link="${platform_link}" />
+        <child link="${lidar_base_link}" />
+        <!-- origin 定义了雷达相对于平台中心的位姿。这个相对位姿是传感器的外参之一。 -->
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </joint>
+
+      <!-- 实例化 Livox 激光雷达模型。 -->
+      <!-- 注意：这里调用的宏名是 Livox_Mid40，但引入的文件是 livox_mid360.xacro，可能存在笔误，实际应为 Livox_Mid360。 -->
+      <xacro:Livox_Mid40 name="${name}_livox" ros_topic="${ros_topic}" publish_pointcloud_type="${publish_pointcloud_type}" max_publish_distance="${max_publish_distance}"/>
+
+        <!-- IMU 连杆 (imu_link): 用于承载 IMU 传感器。 -->
+        <link name="${imu_link}">
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry >
+                <box size="0.03 0.03 0.03" />
+            </geometry>
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry >
+                <box size="0.03 0.03 0.03" />
+            </geometry>
+            </collision>  
+            <inertial>
+                <mass value="0.15"/>
+                <inertia ixx="0.1" ixy="0.0" ixz="0.0" iyy="0.1" iyz="0.0" izz="0.1"/>
+            </inertial>
+        </link>
+
+        <!-- 设置 IMU 在 Gazebo 中的显示材质和物理属性 -->
+        <gazebo reference="${imu_link}">
+            <material>Gazebo/Green</material>
+            <turnGravityOff>false</turnGravityOff>
+        </gazebo>
+
+        <!-- 定义一个固定关节，将 IMU 安装到平台上 -->
+        <joint name="${name}_imu_mount_joint" type="fixed">
+            <parent link="${platform_link}"/>
+            <child link="${imu_link}"/>
+            <!-- origin 定义了 IMU 相对于平台中心的位姿。这个位姿关系（外参）对于传感器融合至关重要。 -->
+            <origin xyz="0.05 0 0.0" rpy="0 0 0" />
+            <axis xyz="0 0 1" />
+        </joint>
+
+        <!-- Gazebo 仿真插件配置: 为 imu_link 添加一个 IMU 传感器插件。 -->
+        <gazebo reference="${imu_link}">
+            <gravity>true</gravity>
+            <sensor name="${name}_imu_sensor" type="imu">
+                <always_on>true</always_on>
+                <update_rate>500</update_rate> <!-- 提升采样频率，减小离散化误差 -->
+                <visualize>true</visualize>
+                <topic>/livox/imu</topic>
+                <!-- 加载 Gazebo 的 IMU 传感器插件 -->
+                <plugin filename="libgazebo_ros_imu_sensor.so" name="${name}_imu_plugin">
+                    <topicName>/livox/imu</topicName>         <!-- IMU 数据发布的 ROS 主题名称 -->
+                    <bodyName>${imu_link}</bodyName>           <!-- 关联的 link 名称 -->
+                    <updateRateHZ>500.0</updateRateHZ>         <!-- 插件内部的更新频率 -->
+                    <!-- 为传感器噪声设置更小的标准差，减轻楼梯冲击带来的虚假高频抖动 -->
+                    <gaussianNoise>0.0005</gaussianNoise>
+                    <xyzOffset>0 0 0</xyzOffset>               <!-- 坐标偏移，通常保持为0 -->
+                    <rpyOffset>0 0 0</rpyOffset>               <!-- 姿态偏移，通常保持为0 -->
+                    <!-- 指定 IMU 数据消息头 (header) 中的 frame_id -->
+                    <frameName>${imu_link}</frameName>        
+                </plugin>
+                <pose>0 0 0 0 0 0</pose>
+            </sensor>
+        </gazebo>
+
+  </xacro:macro>
+</robot>

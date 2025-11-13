@@ -29,6 +29,7 @@ Support List:
 |Robot Name (rname:=)|Pre-Trained Policy|Gazebo|Mujoco|Real|
 |-|-|-|-|-|
 |Unitree-A1 (a1)|legged_gym (IsaacGym)|✅|❌|✅|
+|Unitree-Go1 (go1)|legged_gym (IsaacGym)|✅|❌|✅|
 |Unitree-Go2 (go2)|himloco (IsaacGym)</br>robot_lab (IsaacSim)|✅|✅|✅</br>✅|
 |Unitree-Go2W (go2w)|robot_lab (IsaacSim)|✅|✅|✅|
 |Unitree-B2 (b2)|robot_lab (IsaacSim)|✅|✅|⚪|
@@ -286,6 +287,29 @@ ros2 run rl_sar rl_real_a1
 
 <details>
 
+<summary>Unitree Go1 (Click to expand)</summary>
+
+Go1 uses the same low-level SDK interface as A1, so you can connect it wirelessly or via Ethernet exactly the same way as described in the A1 section above.
+
+Open a new terminal and start the control program
+
+```bash
+# ROS1
+source devel/setup.bash
+rosrun rl_sar rl_real_go1
+
+# ROS2
+source install/setup.bash
+ros2 run rl_sar rl_real_go1
+
+# CMake
+./cmake_build/bin/rl_real_go1
+```
+
+</details>
+
+<details>
+
 <summary>Unitree Go2/Go2W/G1(29dofs) (Click to expand)</summary>
 
 #### Ethernet Connection
@@ -462,17 +486,17 @@ ros2 run rl_sar rl_real_lite3
 
 ### Train the actuator network
 
-Take A1 as an example below
+Take A1/Go1 as an example below
 
-1. Uncomment `#define CSV_LOGGER` in the top of `rl_real_a1.hpp`. You can also modify the corresponding part in the simulation program to collect simulation data for testing the training process.
+1. Uncomment `#define CSV_LOGGER` at the top of `rl_real_a1.hpp` (or `rl_real_go1.hpp` when using Go1). You can also modify the corresponding part in the simulation program to collect simulation data for testing the training process.
 2. Run the control program, and the program will log all data in `src/rl_sar/policy/<ROBOT>/motor.csv`.
 3. Stop the control program and start training the actuator network. Note that `rl_sar/src/rl_sar/policy/` is omitted before the following paths.
     ```bash
-    rosrun rl_sar actuator_net.py --mode train --data a1/motor.csv --output a1/motor.pt
+    rosrun rl_sar actuator_net.py --mode train --data a1/motor.csv --output a1/motor.pt  # replace a1 with go1 if needed
     ```
 4. Verify the trained actuator network.
     ```bash
-    rosrun rl_sar actuator_net.py --mode play --data a1/motor.csv --output a1/motor.pt
+    rosrun rl_sar actuator_net.py --mode play --data a1/motor.csv --output a1/motor.pt  # replace a1 with go1 if needed
     ```
 
 ## Add Your Robot

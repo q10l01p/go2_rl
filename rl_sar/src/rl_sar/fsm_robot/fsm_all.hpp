@@ -7,6 +7,7 @@
 #define FSM_ALL_HPP
 
 #include "fsm_a1.hpp"
+#include "fsm_go1.hpp"
 #include "fsm_go2.hpp"
 
 #endif // FSM_ALL_HPP

@@ -56,16 +56,20 @@ if(NOT USE_CMAKE)
             roscpp
             gazebo_ros
             std_msgs
+            sensor_msgs
             tf
+            tf2
             geometry_msgs
             robot_msgs
             robot_joint_controller
             rospy
+            unitree_legged_msgs
         )
         catkin_package(
             CATKIN_DEPENDS
             robot_joint_controller
             rospy
+            unitree_legged_msgs
         )
     elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
         find_package(ament_cmake REQUIRED)
@@ -328,6 +332,8 @@ endif()
 if(NOT USE_CMAKE)
     if($ENV{ROS_DISTRO} MATCHES "noetic")
         include_directories(${catkin_INCLUDE_DIRS})
+        include_directories(${GAZEBO_INCLUDE_DIRS})
+        link_directories(${GAZEBO_LIBRARY_DIRS})
     endif()
 endif()
 
@@ -344,6 +350,30 @@ include_directories(
     library/core/logger
     fsm_robot
 )
+
+if(NOT USE_CMAKE)
+    if($ENV{ROS_DISTRO} MATCHES "noetic")
+        add_library(unitreeFootContactPlugin SHARED src/plugins/foot_contact_plugin.cc)
+        target_include_directories(unitreeFootContactPlugin PRIVATE ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
+        target_link_libraries(unitreeFootContactPlugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+        target_compile_definitions(unitreeFootContactPlugin PRIVATE _GNU_SOURCE _POSIX_C_SOURCE=200112L PTHREAD_STACK_MIN=16384)
+
+        add_library(unitreeDrawForcePlugin SHARED src/plugins/draw_force_plugin.cc)
+        target_include_directories(unitreeDrawForcePlugin PRIVATE ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
+        target_link_libraries(unitreeDrawForcePlugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+        target_compile_definitions(unitreeDrawForcePlugin PRIVATE _GNU_SOURCE _POSIX_C_SOURCE=200112L PTHREAD_STACK_MIN=16384)
+    endif()
+endif()
+
+# executable for gazebo_high_state_bridge
+if(NOT USE_CMAKE)
+    if($ENV{ROS_DISTRO} MATCHES "noetic")
+        add_executable(gazebo_high_state_bridge src/gazebo_high_state_bridge.cpp)
+        target_include_directories(gazebo_high_state_bridge PRIVATE ${catkin_INCLUDE_DIRS})
+        target_link_libraries(gazebo_high_state_bridge ${catkin_LIBRARIES})
+        target_compile_definitions(gazebo_high_state_bridge PRIVATE _GNU_SOURCE _POSIX_C_SOURCE=200112L PTHREAD_STACK_MIN=16384)
+    endif()
+endif()
 
 # library for inference runtime
 add_library(inference_runtime library/core/inference_runtime/inference_runtime.cpp)
@@ -444,6 +474,28 @@ if(SYSTEM_TYPE STREQUAL "Linux")
                 geometry_msgs
             )
             install(TARGETS rl_real_a1 DESTINATION lib/${PROJECT_NAME})
+        endif()
+    endif()
+endif()
+
+# executable for rl real go1
+if(SYSTEM_TYPE STREQUAL "Linux")
+    add_executable(rl_real_go1 src/rl_real_go1.cpp)
+    target_link_libraries(rl_real_go1
+        ${UNITREE_A1_LIBS}
+        rl_sdk
+        observation_buffer
+            ${YAML_CPP_LIBRARIES}
+    )
+    if(NOT USE_CMAKE)
+        if($ENV{ROS_DISTRO} MATCHES "noetic")
+            target_link_libraries(rl_real_go1 ${catkin_LIBRARIES})
+        elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
+            ament_target_dependencies(rl_real_go1
+                rclcpp
+                geometry_msgs
+            )
+            install(TARGETS rl_real_go1 DESTINATION lib/${PROJECT_NAME})
         endif()
     endif()
 endif()

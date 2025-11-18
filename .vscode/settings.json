@@ -1,6 +1,26 @@
 {
     "files.associations": {
         "array": "cpp",
-        "vector": "cpp"
-    }
+        "vector": "cpp",
+        "iostream": "cpp",
+        "utility": "cpp",
+        "cmath": "cpp",
+        "limits": "cpp",
+        "unordered_map": "cpp",
+        "algorithm": "cpp",
+        "numeric": "cpp",
+        "mutex": "cpp",
+        "string": "cpp",
+        "cstring": "cpp",
+        "filesystem": "cpp",
+        "exception": "cpp",
+        "fstream": "cpp",
+        "stdexcept": "cpp",
+        "functional": "cpp",
+        "csignal": "cpp",
+        "shared_mutex": "cpp",
+        "cstdlib": "cpp",
+        "memory": "cpp"
+    },
+    "cmake.sourceDirectory": "/home/jie/Code/go2_rl_ws/src/slam/FAST_LIO"
 }

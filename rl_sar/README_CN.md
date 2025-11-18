@@ -29,7 +29,6 @@
 |Robot Name (rname:=)|Pre-Trained Policy|Gazebo|Mujoco|Real|
 |-|-|-|-|-|
 |Unitree-A1 (a1)|legged_gym (IsaacGym)|✅|❌|✅|
-|Unitree-Go1 (go1)|legged_gym (IsaacGym)|✅|❌|✅|
 |Unitree-Go2 (go2)|himloco (IsaacGym)</br>robot_lab (IsaacSim)|✅|✅|✅</br>✅|
 |Unitree-Go2W (go2w)|robot_lab (IsaacSim)|✅|✅|✅|
 |Unitree-B2 (b2)|robot_lab (IsaacSim)|✅|✅|⚪|
@@ -287,29 +286,6 @@ ros2 run rl_sar rl_real_a1
 
 <details>
 
-<summary>Unitree Go1（点击展开）</summary>
-
-Go1 使用与 A1 相同的底层 SDK 接口，连接方式与上文 A1 完全一致，可通过无线或网线连接。
-
-新建终端，启动控制程序
-
-```bash
-# ROS1
-source devel/setup.bash
-rosrun rl_sar rl_real_go1
-
-# ROS2
-source install/setup.bash
-ros2 run rl_sar rl_real_go1
-
-# CMake
-./cmake_build/bin/rl_real_go1
-```
-
-</details>
-
-<details>
-
 <summary>Unitree Go2/Go2W/G1(29dofs)（点击展开）</summary>
 
 #### 网线连接
@@ -486,17 +462,17 @@ ros2 run rl_sar rl_real_lite3
 
 ### 训练执行器网络
 
-下面拿A1/Go1举例
+下面拿A1举例
 
-1. 取消注释`rl_real_a1.hpp`或`rl_real_go1.hpp`中最上面的`#define CSV_LOGGER`，你也可以在仿真程序中修改对应部分采集仿真数据用来测试训练过程。
+1. 取消注释`rl_real_a1.hpp`中最上面的`#define CSV_LOGGER`，你也可以在仿真程序中修改对应部分采集仿真数据用来测试训练过程。
 2. 运行控制程序，程序会记录所有数据到`src/rl_sar/policy/<ROBOT>/motor.csv`。
 3. 停止控制程序，开始训练执行器网络。注意，下面的路径前均省略了`rl_sar/src/rl_sar/policy/`。
     ```bash
-    rosrun rl_sar actuator_net.py --mode train --data a1/motor.csv --output a1/motor.pt  # 如果是 Go1，将 a1 替换为 go1
+    rosrun rl_sar actuator_net.py --mode train --data a1/motor.csv --output a1/motor.pt
     ```
 4. 验证已经训练好的训练执行器网络。
     ```bash
-    rosrun rl_sar actuator_net.py --mode play --data a1/motor.csv --output a1/motor.pt  # 如果是 Go1，将 a1 替换为 go1
+    rosrun rl_sar actuator_net.py --mode play --data a1/motor.csv --output a1/motor.pt
     ```
 
 ## 添加你的机器人

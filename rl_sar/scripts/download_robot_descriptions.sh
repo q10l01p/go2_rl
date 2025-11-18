@@ -71,19 +71,6 @@ is_robot_descriptions_valid() {
     return 1
 }
 
-# Function: Set installed version
-set_version() {
-    local version="$1"
-
-    if [ -z "$version" ]; then
-        print_warning "set_version called with empty version"
-        return 1
-    fi
-
-    printf "%s\n" "$version" > "$ROBOT_DESC_VERSION_FILE"
-    return $?
-}
-
 # Main execution
 print_header "[Robot Descriptions Setup]"
 
@@ -191,9 +178,6 @@ if ! is_robot_descriptions_valid; then
     print_error "Robot descriptions installation failed"
     exit 1
 fi
-
-# Set version file after successful installation
-set_version "$EXPECTED_VERSION"
 
 print_separator
 print_success "Robot descriptions setup completed!"

@@ -5,9 +5,6 @@
 
 #include "rl_sdk.hpp"
 
-#include <algorithm>
-#include <cmath>
-
 void RL::StateController(const RobotState<float>* state, RobotCommand<float>* command)
 {
     auto updateState = [&](std::shared_ptr<FSMState> statePtr)
@@ -62,8 +59,6 @@ void RL::StateController(const RobotState<float>* state, RobotCommand<float>* co
         this->control.navigation_mode = !this->control.navigation_mode;
         std::cout << std::endl << LOGGER::INFO << "Navigation mode: " << (this->control.navigation_mode ? "ON" : "OFF") << std::endl;
     }
-
-    this->control.ClearInput();
 }
 
 std::vector<float> RL::ComputeObservation()
@@ -90,16 +85,6 @@ std::vector<float> RL::ComputeObservation()
                 obs_list.push_back(QuatRotateInverse(this->obs.base_quat, this->obs.ang_vel) * this->params.Get<float>("ang_vel_scale"));
             }
         }
-        else if (observation == "base_rpy")
-        {
-            std::vector<float> base_rpy = QuaternionToEuler(this->obs.base_quat);
-            float base_rpy_scale = this->params.Get<float>("base_rpy_scale", 1.0f);
-            for (auto &angle : base_rpy)
-            {
-                angle *= base_rpy_scale;
-            }
-            obs_list.push_back(base_rpy);
-        }
         else if (observation == "gravity_vec")
         {
             obs_list.push_back(QuatRotateInverse(this->obs.base_quat, this->obs.gravity_vec));
@@ -107,23 +92,6 @@ std::vector<float> RL::ComputeObservation()
         else if (observation == "commands")
         {
             obs_list.push_back(this->obs.commands * this->params.Get<std::vector<float>>("commands_scale"));
-        }
-        else if (observation == "trot_phase")
-        {
-            constexpr float kTwoPi = 6.28318530717958647692f;
-            float gait_cycle_time = this->params.Get<float>("gait_cycle_time", 0.0f);
-            float dt = this->params.Get<float>("dt", 0.0f);
-            int decimation = std::max(this->params.Get<int>("decimation", 1), 1);
-            float control_dt = dt * static_cast<float>(decimation);
-            float phase = 0.0f;
-            if (gait_cycle_time > 0.0f && control_dt > 0.0f)
-            {
-                float elapsed_time = static_cast<float>(this->episode_length_buf) * control_dt;
-                phase = std::fmod(elapsed_time, gait_cycle_time) / gait_cycle_time;
-            }
-            float sin_phase = std::sin(kTwoPi * phase);
-            float cos_phase = std::cos(kTwoPi * phase);
-            obs_list.push_back({sin_phase, cos_phase});
         }
         else if (observation == "dof_pos")
         {
@@ -196,20 +164,6 @@ std::vector<float> RL::ComputeObservation()
             float phase = count / this->motion_length;
             std::vector<float> phase_vec = {phase};
             obs_list.push_back(phase_vec);
-        }
-        else if (observation.rfind("zeros", 0) == 0)
-        {
-            int count = 0;
-            try
-            {
-                count = std::stoi(observation.substr(5));
-            }
-            catch (...)
-            {
-                count = 0;
-            }
-            count = std::max(count, 0);
-            obs_list.emplace_back(static_cast<size_t>(count), 0.0f);
         }
     }
 

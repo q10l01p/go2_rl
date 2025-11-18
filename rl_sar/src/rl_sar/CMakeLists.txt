@@ -41,7 +41,6 @@ endif()
 
 # Get project root directory
 get_filename_component(PROJECT_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
-set(RL_SAR_ZOO_DIR "${PROJECT_ROOT_DIR}/src/rl_sar_zoo")
 
 add_definitions(-DCMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_definitions(-DPOLICY_DIR="${PROJECT_ROOT_DIR}/policy")
@@ -57,24 +56,17 @@ if(NOT USE_CMAKE)
             roscpp
             gazebo_ros
             std_msgs
-            sensor_msgs
             tf
-            tf2
             geometry_msgs
             robot_msgs
             robot_joint_controller
             rospy
-            unitree_legged_msgs
         )
         catkin_package(
             CATKIN_DEPENDS
             robot_joint_controller
             rospy
-            unitree_legged_msgs
         )
-        if(EXISTS "${RL_SAR_ZOO_DIR}")
-            catkin_add_env_hooks(50.rl_sar_zoo SHELLS bash zsh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
-        endif()
     elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
         find_package(ament_cmake REQUIRED)
         find_package(joint_state_broadcaster REQUIRED)
@@ -88,14 +80,6 @@ if(NOT USE_CMAKE)
         find_package(gazebo_msgs REQUIRED)
         find_package(std_srvs REQUIRED)
         find_package(geometry_msgs REQUIRED)
-        if(EXISTS "${RL_SAR_ZOO_DIR}")
-            configure_file(
-                ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks/50-rl_sar_zoo.sh.in
-                ${CMAKE_CURRENT_BINARY_DIR}/50-rl_sar_zoo.sh
-                @ONLY
-            )
-            ament_environment_hooks(${CMAKE_CURRENT_BINARY_DIR}/50-rl_sar_zoo.sh)
-        endif()
         ament_package()
     endif()
     add_compile_options(${GAZEBO_CXX_FLAGS})
@@ -308,30 +292,29 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "Disable examples build for unitree_sdk2" FORC
 add_subdirectory(library/thirdparty/robot_sdk/unitree/unitree_sdk2)
 endif()
 
-# # l4w4_sdk
-# add_library(l4w4_sdk INTERFACE)
-# target_include_directories(l4w4_sdk INTERFACE
-#     library/thirdparty/robot_sdk/zhinao/l4w4_sdk
-# )
-# target_link_libraries(l4w4_sdk INTERFACE Threads::Threads)
+# l4w4_sdk
+add_library(l4w4_sdk INTERFACE)
+target_include_directories(l4w4_sdk INTERFACE
+    library/thirdparty/robot_sdk/zhinao/l4w4_sdk
+)
+target_link_libraries(l4w4_sdk INTERFACE Threads::Threads)
 
-# # Lite3_MotionSDK
-# if(SYSTEM_TYPE STREQUAL "Linux")
-# add_library(lite3_motionsdk SHARED IMPORTED)
-# set_target_properties(lite3_motionsdk PROPERTIES
-#     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/include;${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/include/common"
-#     IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/lib/libdeeprobotics_legged_sdk_${ARCH_DIR}.so"
-# )
-# set(LITE3_REAL_LIBS Threads::Threads lite3_motionsdk)
-# if($ENV{ROS_DISTRO} MATCHES "foxy|humble")
-#     file(GLOB GLOB_LITE3_SDK_SO "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/lib/libdeeprobotics_legged_sdk_${ARCH_DIR}.so")
-#     install(FILES
-#         ${GLOB_LITE3_SDK_SO}
-#         DESTINATION lib/
-#     )
-#     endif()
-# endif()
-
+# Lite3_MotionSDK
+if(SYSTEM_TYPE STREQUAL "Linux")
+add_library(lite3_motionsdk SHARED IMPORTED)
+set_target_properties(lite3_motionsdk PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/include;${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/include/common"
+    IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/lib/libdeeprobotics_legged_sdk_${ARCH_DIR}.so"
+)
+set(LITE3_REAL_LIBS Threads::Threads lite3_motionsdk)
+if($ENV{ROS_DISTRO} MATCHES "foxy|humble")
+    file(GLOB GLOB_LITE3_SDK_SO "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/Lite3_MotionSDK/lib/libdeeprobotics_legged_sdk_${ARCH_DIR}.so")
+    install(FILES
+        ${GLOB_LITE3_SDK_SO}
+        DESTINATION lib/
+    )
+    endif()
+endif()
 # Retroid Gamepad
 if(SYSTEM_TYPE STREQUAL "Linux")
 set(GAMEPAD_SRC
@@ -344,8 +327,6 @@ endif()
 if(NOT USE_CMAKE)
     if($ENV{ROS_DISTRO} MATCHES "noetic")
         include_directories(${catkin_INCLUDE_DIRS})
-        include_directories(${GAZEBO_INCLUDE_DIRS})
-        link_directories(${GAZEBO_LIBRARY_DIRS})
     endif()
 endif()
 
@@ -362,30 +343,6 @@ include_directories(
     library/core/logger
     fsm_robot
 )
-
-if(NOT USE_CMAKE)
-    if($ENV{ROS_DISTRO} MATCHES "noetic")
-        add_library(unitreeFootContactPlugin SHARED src/plugins/foot_contact_plugin.cc)
-        target_include_directories(unitreeFootContactPlugin PRIVATE ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
-        target_link_libraries(unitreeFootContactPlugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-        target_compile_definitions(unitreeFootContactPlugin PRIVATE _GNU_SOURCE _POSIX_C_SOURCE=200112L PTHREAD_STACK_MIN=16384)
-
-        add_library(unitreeDrawForcePlugin SHARED src/plugins/draw_force_plugin.cc)
-        target_include_directories(unitreeDrawForcePlugin PRIVATE ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
-        target_link_libraries(unitreeDrawForcePlugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-        target_compile_definitions(unitreeDrawForcePlugin PRIVATE _GNU_SOURCE _POSIX_C_SOURCE=200112L PTHREAD_STACK_MIN=16384)
-    endif()
-endif()
-
-# executable for gazebo_high_state_bridge
-if(NOT USE_CMAKE)
-    if($ENV{ROS_DISTRO} MATCHES "noetic")
-        add_executable(gazebo_high_state_bridge src/gazebo_high_state_bridge.cpp)
-        target_include_directories(gazebo_high_state_bridge PRIVATE ${catkin_INCLUDE_DIRS})
-        target_link_libraries(gazebo_high_state_bridge ${catkin_LIBRARIES})
-        target_compile_definitions(gazebo_high_state_bridge PRIVATE _GNU_SOURCE _POSIX_C_SOURCE=200112L PTHREAD_STACK_MIN=16384)
-    endif()
-endif()
 
 # library for inference runtime
 add_library(inference_runtime library/core/inference_runtime/inference_runtime.cpp)
@@ -486,28 +443,6 @@ if(SYSTEM_TYPE STREQUAL "Linux")
                 geometry_msgs
             )
             install(TARGETS rl_real_a1 DESTINATION lib/${PROJECT_NAME})
-        endif()
-    endif()
-endif()
-
-# executable for rl real go1
-if(SYSTEM_TYPE STREQUAL "Linux")
-    add_executable(rl_real_go1 src/rl_real_go1.cpp)
-    target_link_libraries(rl_real_go1
-        ${UNITREE_A1_LIBS}
-        rl_sdk
-        observation_buffer
-            ${YAML_CPP_LIBRARIES}
-    )
-    if(NOT USE_CMAKE)
-        if($ENV{ROS_DISTRO} MATCHES "noetic")
-            target_link_libraries(rl_real_go1 ${catkin_LIBRARIES})
-        elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
-            ament_target_dependencies(rl_real_go1
-                rclcpp
-                geometry_msgs
-            )
-            install(TARGETS rl_real_go1 DESTINATION lib/${PROJECT_NAME})
         endif()
     endif()
 endif()

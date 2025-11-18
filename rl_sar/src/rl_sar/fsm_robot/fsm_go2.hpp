@@ -11,29 +11,6 @@
 
 namespace go2_fsm
 {
-inline std::string DetermineLocomotionConfig(Input::Keyboard keyboard, Input::Gamepad gamepad)
-{
-    switch (keyboard)
-    {
-        case Input::Keyboard::Num1: return "himloco";
-        case Input::Keyboard::Num2: return "go2_trot";
-        case Input::Keyboard::Num3: return "go2_stairs";
-        case Input::Keyboard::Num4: return "go2_jump";
-        case Input::Keyboard::Num5: return "go2_handstand";
-        default: break;
-    }
-
-    switch (gamepad)
-    {
-        case Input::Gamepad::RB_DPadUp: return "himloco";
-        case Input::Gamepad::RB_DPadDown: return "go2_trot";
-        case Input::Gamepad::RB_DPadLeft: return "go2_stairs";
-        case Input::Gamepad::RB_DPadRight: return "go2_jump";
-        case Input::Gamepad::LB_DPadUp: return "go2_handstand";
-        default: break;
-    }
-    return "";
-}
 
 class RLFSMStatePassive : public RLFSMState
 {
@@ -125,10 +102,8 @@ public:
         }
         if (percent_getup >= 1.0f)
         {
-            const std::string requested_config = DetermineLocomotionConfig(rl.control.current_keyboard, rl.control.current_gamepad);
-            if (!requested_config.empty())
+            if (rl.control.current_keyboard == Input::Keyboard::Num1 || rl.control.current_gamepad == Input::Gamepad::RB_DPadUp)
             {
-                rl.config_name = requested_config;
                 return "RLFSMStateRLLocomotion";
             }
             else if (rl.control.current_keyboard == Input::Keyboard::Num9 || rl.control.current_gamepad == Input::Gamepad::B)
@@ -181,23 +156,18 @@ public:
 
     float percent_transition = 0.0f;
 
-    bool LoadPolicy(const std::string& config_name)
+    void Enter() override
     {
-        if (config_name.empty())
-        {
-            return false;
-        }
+        percent_transition = 0.0f;
+        rl.episode_length_buf = 0;
 
-        rl.rl_init_done = false;
-        rl.config_name = config_name;
-        const std::string robot_config_path = rl.robot_name + "/" + rl.config_name;
+        // read params from yaml
+        rl.config_name = "himloco";
+        std::string robot_config_path = rl.robot_name + "/" + rl.config_name;
         try
         {
             rl.InitRL(robot_config_path);
-            rl.rl_init_done = true;
             rl.now_state = *fsm_state;
-            std::cout << std::endl << LOGGER::INFO << "RL Controller initialized with config: " << rl.config_name << std::endl;
-            return true;
         }
         catch (const std::exception& e)
         {
@@ -205,28 +175,14 @@ public:
             rl.rl_init_done = false;
             rl.fsm.RequestStateChange("RLFSMStatePassive");
         }
-        return false;
-    }
-
-    void Enter() override
-    {
-        percent_transition = 0.0f;
-        rl.episode_length_buf = 0;
-
-        std::string requested_config = DetermineLocomotionConfig(rl.control.current_keyboard, rl.control.current_gamepad);
-        if (requested_config.empty())
-        {
-            requested_config = rl.config_name.empty() ? "himloco" : rl.config_name;
-        }
-        LoadPolicy(requested_config);
     }
 
     void Run() override
     {
-        if (!rl.rl_init_done) return;
-
         // position transition from last default_dof_pos to current default_dof_pos
         // if (Interpolate(percent_transition, rl.now_state.motor_state.q, rl.params.Get<std::vector<float>>("default_dof_pos"), 0.5f, "Policy transition", true)) return;
+
+        if (!rl.rl_init_done) rl.rl_init_done = true;
 
         std::cout << "\r\033[K" << std::flush << LOGGER::INFO << "RL Controller [" << rl.config_name << "] x:" << rl.control.x << " y:" << rl.control.y << " yaw:" << rl.control.yaw << std::flush;
         RLControl();
@@ -251,16 +207,9 @@ public:
         {
             return "RLFSMStateGetUp";
         }
-        else
+        else if (rl.control.current_keyboard == Input::Keyboard::Num1 || rl.control.current_gamepad == Input::Gamepad::RB_DPadUp)
         {
-            const std::string requested_config = DetermineLocomotionConfig(rl.control.current_keyboard, rl.control.current_gamepad);
-            if (!requested_config.empty())
-            {
-                if (requested_config != rl.config_name || !rl.rl_init_done)
-                {
-                    LoadPolicy(requested_config);
-                }
-            }
+            return "RLFSMStateRLLocomotion";
         }
         return state_name_;
     }

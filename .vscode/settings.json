@@ -20,7 +20,8 @@
         "csignal": "cpp",
         "shared_mutex": "cpp",
         "cstdlib": "cpp",
-        "memory": "cpp"
+        "memory": "cpp",
+        "deque": "cpp"
     },
     "cmake.sourceDirectory": "/home/jie/Code/go2_rl_ws/src/slam/FAST_LIO"
 }
